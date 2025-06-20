@@ -280,7 +280,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileIds, setFileIds] = useState<string[]>([]);
 
-  const [focusMode, setFocusMode] = useState('bscDocuments');
+  const [focusMode, setFocusMode] = useState('webSearch');
   const [optimizationMode, setOptimizationMode] = useState('balanced');
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
