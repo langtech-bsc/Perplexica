@@ -40,7 +40,7 @@ summarize
 
 ---
 
-### Example
+### Examples
 
 Conversation:
 human: Tell me about flights from Tokyo to Paris  
@@ -67,7 +67,20 @@ Output:
 https://example.com
 </links>
 \`\`\`
+
+Spanish example:
+human: ¿Cuál es la capital de Perú?  
+ai: La capital de Perú es Lima.  
+human: ¿Y su población?
+
+Output:
+\`\`\`
+<question>
+¿Cuál es la población de Lima, la capital de Perú?
+</question>
+\`\`\`
 `;
+
 
 
 
