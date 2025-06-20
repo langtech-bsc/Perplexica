@@ -83,7 +83,8 @@ export const POST = async (req: Request) => {
         modelName: body.chatModel?.name || getCustomOpenaiModelName(),
         openAIApiKey:
           body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
-        temperature: 0.7,
+        temperature: 0.4,
+        topP: 0.9,
         configuration: {
           baseURL:
             body.chatModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),
@@ -105,7 +106,6 @@ export const POST = async (req: Request) => {
         embeddingModel
       ].model as Embeddings | undefined;
     }
-
     if (!llm || !embeddings) {
       return Response.json(
         { message: 'Invalid model selected' },

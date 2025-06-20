@@ -4,19 +4,13 @@ If it is a writing task or a simple hi, hello rather than a question, you need t
 
 Example:
 1. Follow up question: What is the atomic radius of S?
-Rephrased: Atomic radius of S
+assistant: Atomic radius of S
 
 2. Follow up question: What is linear algebra?
-Rephrased: Linear algebra
+assistant: Linear algebra
 
 3. Follow up question: What is the third law of thermodynamics?
-Rephrased: Third law of thermodynamics
-
-Conversation:
-{chat_history}
-
-Follow up question: {query}
-Rephrased question:
+assistant: Third law of thermodynamics
 `;
 
 export const wolframAlphaSearchResponsePrompt = `
@@ -61,9 +55,7 @@ export const wolframAlphaSearchResponsePrompt = `
     - Provide explanations or historical context as needed to enhance understanding.
     - End with a conclusion or overall perspective if relevant.
 
-    <context>
-    {context}
-    </context>
+    ### ---
 
     Current date & time in ISO format (UTC timezone) is: {date}.
 `;

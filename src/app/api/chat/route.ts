@@ -185,7 +185,6 @@ export const POST = async (req: Request) => {
   try {
     const body = (await req.json()) as Body;
     const { message } = body;
-
     if (message.content === '') {
       return Response.json(
         {
@@ -225,7 +224,8 @@ export const POST = async (req: Request) => {
       llm = new ChatOpenAI({
         openAIApiKey: getCustomOpenaiApiKey(),
         modelName: getCustomOpenaiModelName(),
-        temperature: 0.7,
+        temperature: 0.4,
+        topP: 0.9,
         configuration: {
           baseURL: getCustomOpenaiApiUrl(),
         },

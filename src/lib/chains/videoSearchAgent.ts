@@ -3,7 +3,7 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { PromptTemplate } from '@langchain/core/prompts';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
@@ -16,19 +16,13 @@ const VideoSearchChainPrompt = `
   
   Example:
   1. Follow up question: How does a car work?
-  Rephrased: How does a car work?
+  assistant: How does a car work?
   
   2. Follow up question: What is the theory of relativity?
-  Rephrased: What is theory of relativity
+  assistant: What is theory of relativity
   
   3. Follow up question: How does an AC work?
-  Rephrased: How does an AC work
-  
-  Conversation:
-  {chat_history}
-  
-  Follow up question: {query}
-  Rephrased question:
+  assistant: How does an AC work
   `;
 
 type VideoSearchChainInput = {
@@ -55,7 +49,10 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
         return input.query;
       },
     }),
-    PromptTemplate.fromTemplate(VideoSearchChainPrompt),
+    ChatPromptTemplate.fromMessages([
+        ['system', VideoSearchChainPrompt],
+        ['user', 'Follow up question: {query}\nassistant:'],
+      ]),
     llm,
     strParser,
     RunnableLambda.from(async (input: string) => {

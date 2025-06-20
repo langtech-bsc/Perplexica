@@ -20,7 +20,6 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
         const res = await axios.get(link, {
           responseType: 'arraybuffer',
         });
-
         const isPdf = res.headers['content-type'] === 'application/pdf';
 
         if (isPdf) {

@@ -134,6 +134,5 @@ export const getAvailableEmbeddingModelProviders = async () => {
       models[provider] = providerModels;
     }
   }
-
   return models;
 };

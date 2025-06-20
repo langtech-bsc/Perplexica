@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getSearxngApiEndpoint } from './config';
+import { getHFToken } from './config';
 
 interface SearxngSearchOptions {
   categories?: string[];
@@ -24,7 +25,7 @@ export const searchSearxng = async (
   opts?: SearxngSearchOptions,
 ) => {
   const searxngURL = getSearxngApiEndpoint();
-
+  const token = getHFToken() || 'hf_xxx';
   const url = new URL(`${searxngURL}/search?format=json`);
   url.searchParams.append('q', query);
 
@@ -39,7 +40,12 @@ export const searchSearxng = async (
     });
   }
 
-  const res = await axios.get(url.toString());
+  const res = await axios.get(url.toString(),{
+    headers: {
+    Authorization: `Bearer ${token}`,  // or hardcode if needed
+    'Content-Type': 'application/json',
+  },
+  });
 
   const results: SearxngSearchResult[] = res.data.results;
   const suggestions: string[] = res.data.suggestions;

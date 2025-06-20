@@ -18,6 +18,7 @@ import LineOutputParser from '../outputParsers/lineOutputParser';
 import { getDocumentsFromLinks } from '../utils/documents';
 import { Document } from 'langchain/document';
 import { searchSearxng } from '../searxng';
+import { searchlinks } from '../searxngLinks';
 import path from 'node:path';
 import fs from 'node:fs';
 import computeSimilarity from '../utils/computeSimilarity';
@@ -37,6 +38,55 @@ export interface MetaSearchAgentType {
   ) => Promise<eventEmitter>;
 }
 
+const promptSummarize = `You are a web search summarizer, tasked with summarizing a piece of context retrieved from a web search. Your job is to summarize the 
+context into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
+If the query is \"summarize\", you should provide a detailed summary of the context. If the query is a specific question, you should answer it in the summary.
+
+- **Journalistic tone**: The summary should sound professional and journalistic, not too casual or vague.
+- **Thorough and detailed**: Ensure that every key point from the context is captured and that the summary directly answers the query.
+- **Not too lengthy, but detailed**: The summary should be informative but not excessively long. Focus on providing detailed information in a concise format.
+
+The context will be shared inside the \`context\` XML tag, and the query inside the \`query\` XML tag.
+
+<example>
+1. \`<context>
+Docker is a set of platform-as-a-service products that use OS-level virtualization to deliver software in packages called containers. 
+It was first released in 2013 and is developed by Docker, Inc. Docker is designed to make it easier to create, deploy, and run applications 
+by using containers.
+</context>
+
+<query>
+What is Docker and how does it work?
+</query>
+
+Response:
+Docker is a revolutionary platform-as-a-service product developed by Docker, Inc., that uses container technology to make application 
+deployment more efficient. It allows developers to package their software with all necessary dependencies, making it easier to run in 
+any environment. Released in 2013, Docker has transformed the way applications are built, deployed, and managed.
+\`
+2. \`<context>
+The theory of relativity, or simply relativity, encompasses two interrelated theories of Albert Einstein: special relativity and general
+relativity. However, the word "relativity" is sometimes used in reference to Galilean invariance. The term "theory of relativity" was based
+on the expression "relative theory" used by Max Planck in 1906. The theory of relativity usually encompasses two interrelated theories by
+Albert Einstein: special relativity and general relativity. Special relativity applies to all physical phenomena in the absence of gravity.
+General relativity explains the law of gravitation and its relation to other forces of nature. It applies to the cosmological and astrophysical
+realm, including astronomy.
+</context>
+
+<query>
+summarize
+</query>
+
+Response:
+The theory of relativity, developed by Albert Einstein, encompasses two main theories: special relativity and general relativity. Special
+relativity applies to all physical phenomena in the absence of gravity, while general relativity explains the law of gravitation and its
+relation to other forces of nature. The theory of relativity is based on the concept of "relative theory," as introduced by Max Planck in
+1906. It is a fundamental theory in physics that has revolutionized our understanding of the universe.
+\`
+</example>
+
+**Make sure to answer the query in the summary**
+`
 interface Config {
   searchWeb: boolean;
   rerank: boolean;
@@ -45,6 +95,7 @@ interface Config {
   queryGeneratorPrompt: string;
   responsePrompt: string;
   activeEngines: string[];
+  bscDocuments: boolean;
 }
 
 type BasicChainInput = {
@@ -64,7 +115,10 @@ class MetaSearchAgent implements MetaSearchAgentType {
     (llm as unknown as ChatOpenAI).temperature = 0;
 
     return RunnableSequence.from([
-      PromptTemplate.fromTemplate(this.config.queryGeneratorPrompt),
+      ChatPromptTemplate.fromMessages([
+        ['system', this.config.queryGeneratorPrompt],
+        ['user', '### CONVERSATION HISTORY\n{chat_history}\n\n### Follow up question: {query}'],
+      ]),
       llm,
       this.strParser,
       RunnableLambda.from(async (input: string) => {
@@ -77,13 +131,35 @@ class MetaSearchAgent implements MetaSearchAgentType {
         });
 
         const links = await linksOutputParser.parse(input);
+
         let question = this.config.summarizer
           ? await questionOutputParser.parse(input)
           : input;
-
+        
         if (question === 'not_needed') {
           return { query: '', docs: [] };
         }
+        
+        if (this.config.bscDocuments){
+          question = question.replace(/<think>.*?<\/think>/g, '');          
+          const res = await searchlinks();
+          const documents = res.results.map(
+            (result) =>
+              new Document({
+                pageContent:
+                  result.content || '',
+                metadata: {
+                  title: result.title,
+                  url: result.url,
+                  ...(result.img_src && { img_src: result.img_src }),
+                },
+              }),
+          );
+          
+          return { query: question, docs: documents };
+        }
+
+        
 
         if (links.length > 0) {
           if (question.length === 0) {
@@ -125,69 +201,14 @@ class MetaSearchAgent implements MetaSearchAgentType {
               docGroups[docIndex].metadata.totalDocs += 1;
             }
           });
-
           await Promise.all(
             docGroups.map(async (doc) => {
-              const res = await llm.invoke(`
-            You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
-            text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
-            If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
-            
-            - **Journalistic tone**: The summary should sound professional and journalistic, not too casual or vague.
-            - **Thorough and detailed**: Ensure that every key point from the text is captured and that the summary directly answers the query.
-            - **Not too lengthy, but detailed**: The summary should be informative but not excessively long. Focus on providing detailed information in a concise format.
-
-            The text will be shared inside the \`text\` XML tag, and the query inside the \`query\` XML tag.
-
-            <example>
-            1. \`<text>
-            Docker is a set of platform-as-a-service products that use OS-level virtualization to deliver software in packages called containers. 
-            It was first released in 2013 and is developed by Docker, Inc. Docker is designed to make it easier to create, deploy, and run applications 
-            by using containers.
-            </text>
-
-            <query>
-            What is Docker and how does it work?
-            </query>
-
-            Response:
-            Docker is a revolutionary platform-as-a-service product developed by Docker, Inc., that uses container technology to make application 
-            deployment more efficient. It allows developers to package their software with all necessary dependencies, making it easier to run in 
-            any environment. Released in 2013, Docker has transformed the way applications are built, deployed, and managed.
-            \`
-            2. \`<text>
-            The theory of relativity, or simply relativity, encompasses two interrelated theories of Albert Einstein: special relativity and general
-            relativity. However, the word "relativity" is sometimes used in reference to Galilean invariance. The term "theory of relativity" was based
-            on the expression "relative theory" used by Max Planck in 1906. The theory of relativity usually encompasses two interrelated theories by
-            Albert Einstein: special relativity and general relativity. Special relativity applies to all physical phenomena in the absence of gravity.
-            General relativity explains the law of gravitation and its relation to other forces of nature. It applies to the cosmological and astrophysical
-            realm, including astronomy.
-            </text>
-
-            <query>
-            summarize
-            </query>
-
-            Response:
-            The theory of relativity, developed by Albert Einstein, encompasses two main theories: special relativity and general relativity. Special
-            relativity applies to all physical phenomena in the absence of gravity, while general relativity explains the law of gravitation and its
-            relation to other forces of nature. The theory of relativity is based on the concept of "relative theory," as introduced by Max Planck in
-            1906. It is a fundamental theory in physics that has revolutionized our understanding of the universe.
-            \`
-            </example>
-
-            Everything below is the actual data you will be working with. Good luck!
-
-            <query>
-            ${question}
-            </query>
-
-            <text>
-            ${doc.pageContent}
-            </text>
-
-            Make sure to answer the query in the summary.
-          `);
+              const res = await llm.invoke(
+                [
+                  ['system', promptSummarize],
+                  ['user', `**Context:**\n<context>\n${doc.pageContent}\n</context>\n\n**User Question:**\n${question}`],
+              ]
+            );
 
               const document = new Document({
                 pageContent: res.content as string,
@@ -203,10 +224,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           return { query: question, docs: docs };
         } else {
-          question = question.replace(/<think>.*?<\/think>/g, '');
-
+          question = question.replace(/<think>.*?<\/think>/g, '');          
           const res = await searchSearxng(question, {
-            language: 'en',
+            language: 'es',
             engines: this.config.activeEngines,
           });
 
@@ -256,12 +276,11 @@ class MetaSearchAgent implements MetaSearchAgentType {
           if (this.config.searchWeb) {
             const searchRetrieverChain =
               await this.createSearchRetrieverChain(llm);
-
             const searchRetrieverResult = await searchRetrieverChain.invoke({
               chat_history: processedHistory,
               query,
             });
-
+            
             query = searchRetrieverResult.query;
             docs = searchRetrieverResult.docs;
           }
@@ -281,10 +300,23 @@ class MetaSearchAgent implements MetaSearchAgentType {
           })
           .pipe(this.processDocs),
       }),
+      RunnableLambda.from(async (inputs) => {
+      const hasContext = typeof inputs.context === 'string' && inputs.context.trim().length > 0;
+
+      const userMessage = hasContext
+        ? `**Context:**\n<context>\n${inputs.context}\n</context>\n\n**User Question:**\n${inputs.query}`
+        : `${inputs.query}`;
+
+      return {
+        ...inputs,
+        userMessage,
+      };
+    }),
       ChatPromptTemplate.fromMessages([
         ['system', this.config.responsePrompt],
         new MessagesPlaceholder('chat_history'),
-        ['user', '{query}'],
+        
+        ['user', `{userMessage}`],
       ]),
       llm,
       this.strParser,
@@ -380,12 +412,16 @@ class MetaSearchAgent implements MetaSearchAgentType {
         return docsWithContent.slice(0, 15);
       }
     } else if (optimizationMode === 'balanced') {
+      console.log("Balance");
+      console.log(docsWithContent.length);
+      
       const [docEmbeddings, queryEmbedding] = await Promise.all([
         embeddings.embedDocuments(
           docsWithContent.map((doc) => doc.pageContent),
         ),
         embeddings.embedQuery(query),
       ]);
+      console.log("Balance 2");
 
       docsWithContent.push(
         ...filesData.map((fileData) => {
@@ -413,9 +449,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
       const sortedDocs = similarity
         .filter((sim) => sim.similarity > (this.config.rerankThreshold ?? 0.3))
         .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 15)
+        .slice(0, 5)
         .map((sim) => docsWithContent[sim.index]);
-
+       
       return sortedDocs;
     }
 
@@ -426,7 +462,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     return docs
       .map(
         (_, index) =>
-          `${index + 1}. ${docs[index].metadata.title} ${docs[index].pageContent}`,
+          `[${index + 1}] ${docs[index].metadata.title}: ${docs[index].pageContent}`,
       )
       .join('\n');
   }

@@ -3,7 +3,7 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { PromptTemplate } from '@langchain/core/prompts';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
@@ -16,19 +16,13 @@ You need to make sure the rephrased question agrees with the conversation and is
 
 Example:
 1. Follow up question: What is a cat?
-Rephrased: A cat
+assistant: A cat
 
 2. Follow up question: What is a car? How does it works?
-Rephrased: Car working
+assistant: Car working
 
 3. Follow up question: How does an AC work?
-Rephrased: AC working
-
-Conversation:
-{chat_history}
-
-Follow up question: {query}
-Rephrased question:
+assistant: AC working
 `;
 
 type ImageSearchChainInput = {
@@ -54,7 +48,10 @@ const createImageSearchChain = (llm: BaseChatModel) => {
         return input.query;
       },
     }),
-    PromptTemplate.fromTemplate(imageSearchChainPrompt),
+     ChatPromptTemplate.fromMessages([
+        ['system', imageSearchChainPrompt],
+        ['user', '<conversation>\n{chat_history}\n</conversation>\n\nFollow up question: {query}\nassistant:'],
+      ]),
     llm,
     strParser,
     RunnableLambda.from(async (input: string) => {

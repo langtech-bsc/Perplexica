@@ -15,6 +15,7 @@ interface Config {
   GENERAL: {
     SIMILARITY_MEASURE: string;
     KEEP_ALIVE: string;
+    HF_TOKEN: string;
   };
   MODELS: {
     OPENAI: {
@@ -69,6 +70,8 @@ export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
 
 export const getKeepAlive = () => loadConfig().GENERAL.KEEP_ALIVE;
+
+export const getHFToken = () => loadConfig().GENERAL.HF_TOKEN;
 
 export const getOpenaiApiKey = () => loadConfig().MODELS.OPENAI.API_KEY;
 

@@ -4,19 +4,13 @@ If it is a writing task or a simple hi, hello rather than a question, you need t
 
 Example:
 1. Follow up question: Which company is most likely to create an AGI
-Rephrased: Which company is most likely to create an AGI
+assistant: Which company is most likely to create an AGI
 
 2. Follow up question: Is Earth flat?
-Rephrased: Is Earth flat?
+assistant: Is Earth flat?
 
 3. Follow up question: Is there life on Mars?
-Rephrased: Is there life on Mars?
-
-Conversation:
-{chat_history}
-
-Follow up question: {query}
-Rephrased question:
+assistant: Is there life on Mars?
 `;
 
 export const redditSearchResponsePrompt = `
@@ -61,9 +55,7 @@ export const redditSearchResponsePrompt = `
     - Provide explanations or historical context as needed to enhance understanding.
     - End with a conclusion or overall perspective if relevant.
 
-    <context>
-    {context}
-    </context>
+    ### ---
 
     Current date & time in ISO format (UTC timezone) is: {date}.
 `;

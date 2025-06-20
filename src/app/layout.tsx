@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'sonner';
 import ThemeProvider from '@/components/theme/Provider';
+import { runInitLogicOnce } from '@/lib/init';
 
 const montserrat = Montserrat({
   weight: ['300', '400', '500', '700'],
@@ -19,11 +20,12 @@ export const metadata: Metadata = {
     'Perplexica is an AI powered chatbot that is connected to the internet.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await runInitLogicOnce();
   return (
     <html className="h-full" lang="en" suppressHydrationWarning>
       <body className={cn('h-full', montserrat.className)}>

@@ -50,7 +50,8 @@ export const POST = async (req: Request) => {
       llm = new ChatOpenAI({
         openAIApiKey: getCustomOpenaiApiKey(),
         modelName: getCustomOpenaiModelName(),
-        temperature: 0.7,
+        temperature: 0.5,
+        topP: 0.9,
         configuration: {
           baseURL: getCustomOpenaiApiUrl(),
         },
@@ -69,7 +70,7 @@ export const POST = async (req: Request) => {
       },
       llm,
     );
-
+    
     return Response.json({ suggestions }, { status: 200 });
   } catch (err) {
     console.error(`An error occurred while generating suggestions: ${err}`);

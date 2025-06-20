@@ -2,6 +2,16 @@ import MetaSearchAgent from '@/lib/search/metaSearchAgent';
 import prompts from '../prompts';
 
 export const searchHandlers: Record<string, MetaSearchAgent> = {
+  bscDocuments: new MetaSearchAgent({
+    activeEngines: [],
+    queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
+    responsePrompt: prompts.webSearchResponsePrompt,
+    rerank: true,
+    rerankThreshold: 0.6,
+    searchWeb: true,
+    summarizer: true,
+    bscDocuments: true,
+  }),
   webSearch: new MetaSearchAgent({
     activeEngines: [],
     queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
@@ -10,6 +20,7 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: true,
+    bscDocuments: false,
   }),
   academicSearch: new MetaSearchAgent({
     activeEngines: ['arxiv', 'google scholar', 'pubmed'],
@@ -19,6 +30,7 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     rerankThreshold: 0,
     searchWeb: true,
     summarizer: false,
+    bscDocuments: false,
   }),
   writingAssistant: new MetaSearchAgent({
     activeEngines: [],
@@ -28,6 +40,7 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     rerankThreshold: 0,
     searchWeb: false,
     summarizer: false,
+    bscDocuments: false,
   }),
   wolframAlphaSearch: new MetaSearchAgent({
     activeEngines: ['wolframalpha'],
@@ -37,6 +50,7 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     rerankThreshold: 0,
     searchWeb: true,
     summarizer: false,
+    bscDocuments: false,
   }),
   youtubeSearch: new MetaSearchAgent({
     activeEngines: ['youtube'],
@@ -46,6 +60,7 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: false,
+    bscDocuments: false,
   }),
   redditSearch: new MetaSearchAgent({
     activeEngines: ['reddit'],
@@ -55,5 +70,6 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: false,
+    bscDocuments: false,
   }),
 };

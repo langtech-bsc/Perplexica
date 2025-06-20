@@ -18,6 +18,12 @@ import { Fragment } from 'react';
 
 const focusModes = [
   {
+    key: 'bscDocuments',
+    title: 'BSC Documents',
+    description: 'Search in published academic papers',
+    icon: <SwatchBook size={20} />,
+  },
+  {
     key: 'webSearch',
     title: 'All',
     description: 'Searches across all of the internet',
