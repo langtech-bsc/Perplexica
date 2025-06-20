@@ -21,6 +21,7 @@ not_needed
 <question>
 summarize
 </question>
+
 <links>
 <the URL>
 </links>
@@ -30,8 +31,9 @@ summarize
 
 ### Format Rules
 
-- Always respond with just a \`<question>\` block.
-- Add a \`<links>\` block **only if the user includes a URL**.
+- Always respond with just a \`<question>...</question>\` block.
+- Add a \`<links>...</links\ block **only if the user includes a URL**.
+- The output must contain only the <question> block, and an optional <links> block if and only if a URL is present. No explanation, notes, or extra text is allowed.
 - No other text or tags allowed.
 
 ---
@@ -51,12 +53,12 @@ Flight prices from Tokyo to Paris
 \`\`\`
 
 Another example:
-human: What is X from https://example.com
+human: Que es X en https://example.com
 
 Output:
 \`\`\`
 <question>
-What is X?
+¿Qué is X?
 </question>
 <links>
 https://example.com

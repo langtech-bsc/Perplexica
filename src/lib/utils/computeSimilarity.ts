@@ -4,8 +4,6 @@ import { getSimilarityMeasure } from '../config';
 
 const computeSimilarity = (x: number[], y: number[]): number => {
   const similarityMeasure = getSimilarityMeasure();
-  console.log("computing embbeding");
-  
   if (similarityMeasure === 'cosine') {
     return cosineSimilarity(x, y) as number;
   } else if (similarityMeasure === 'dot') {

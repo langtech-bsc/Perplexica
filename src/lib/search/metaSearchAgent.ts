@@ -130,8 +130,10 @@ class MetaSearchAgent implements MetaSearchAgentType {
           key: 'question',
         });
 
+        console.log("=================");
+        console.log(input);
+        console.log("=================");
         const links = await linksOutputParser.parse(input);
-
         let question = this.config.summarizer
           ? await questionOutputParser.parse(input)
           : input;
@@ -412,16 +414,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
         return docsWithContent.slice(0, 15);
       }
     } else if (optimizationMode === 'balanced') {
-      console.log("Balance");
-      console.log(docsWithContent.length);
-      
       const [docEmbeddings, queryEmbedding] = await Promise.all([
         embeddings.embedDocuments(
           docsWithContent.map((doc) => doc.pageContent),
         ),
         embeddings.embedQuery(query),
       ]);
-      console.log("Balance 2");
 
       docsWithContent.push(
         ...filesData.map((fileData) => {
