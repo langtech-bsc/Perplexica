@@ -7,7 +7,7 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
     responsePrompt: prompts.webSearchResponsePrompt,
     rerank: true,
-    rerankThreshold: 0.6,
+    rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: true,
     bscDocuments: true,

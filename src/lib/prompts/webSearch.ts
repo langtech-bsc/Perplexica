@@ -40,12 +40,14 @@ summarize
 
 ---
 
-### Examples
-
-Conversation:
+**Example**:
+### CONVERSATION HISTORY
+<history>
 human: Tell me about flights from Tokyo to Paris  
 ai: There are several daily flights from Tokyo to Paris.  
-human: How much do they cost?
+</history>
+### Follow up question
+How much do they cost?
 
 Output:
 \`\`\`
@@ -55,7 +57,12 @@ Flight prices from Tokyo to Paris
 \`\`\`
 
 Another example:
-human: Que es X en https://example.com
+### CONVERSATION HISTORY
+<history>
+
+</history>
+### Follow up question
+Que es X en https://example.com
 
 Output:
 \`\`\`
@@ -69,9 +76,13 @@ https://example.com
 \`\`\`
 
 Spanish example:
+### CONVERSATION HISTORY
+<history>
 human: ¿Cuál es la capital de Perú?  
-ai: La capital de Perú es Lima.  
-human: ¿Y su población?
+ai: La capital de Perú es Lima.
+</history>
+### Follow up question
+¿Y su población?
 
 Output:
 \`\`\`

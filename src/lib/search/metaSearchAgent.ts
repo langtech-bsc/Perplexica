@@ -111,14 +111,20 @@ class MetaSearchAgent implements MetaSearchAgentType {
     this.config = config;
   }
 
-  private async createSearchRetrieverChain(llm: BaseChatModel) {
+  private async createSearchRetrieverChain(llm: BaseChatModel, embeddings:Embeddings) {
     (llm as unknown as ChatOpenAI).temperature = 0;
 
     return RunnableSequence.from([
-      ChatPromptTemplate.fromMessages([
-        ['system', this.config.queryGeneratorPrompt],
-        ['user', '### CONVERSATION HISTORY\n{chat_history}\n\n### Follow up question: {query}'],
-      ]),
+      RunnableLambda.from(async (input: any) => {
+        const user = `### CONVERSATION HISTORY\n<history>\n${input.chat_history?.trim()}\n</history>\n### Follow up question\n${input.query}`
+        
+        const prompt = ChatPromptTemplate.fromMessages([
+          ['system', this.config.queryGeneratorPrompt],
+          ['user', user],
+        ]);
+        const final_prompt = await prompt.formatMessages({});
+        return final_prompt;
+      }),
       llm,
       this.strParser,
       RunnableLambda.from(async (input: string) => {
@@ -144,7 +150,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         
         if (this.config.bscDocuments){
           question = question.replace(/<think>.*?<\/think>/g, '');          
-          const res = await searchlinks();
+          const res = await searchlinks(embeddings, question);
           const documents = res.results.map(
             (result) =>
               new Document({
@@ -277,7 +283,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           if (this.config.searchWeb) {
             const searchRetrieverChain =
-              await this.createSearchRetrieverChain(llm);
+              await this.createSearchRetrieverChain(llm, embeddings);
+
             const searchRetrieverResult = await searchRetrieverChain.invoke({
               chat_history: processedHistory,
               query,
@@ -294,7 +301,6 @@ class MetaSearchAgent implements MetaSearchAgentType {
             embeddings,
             optimizationMode,
           );
-
           return sortedDocs;
         })
           .withConfig({
@@ -369,7 +375,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     const docsWithContent = docs.filter(
       (doc) => doc.pageContent && doc.pageContent.length > 0,
     );
-
+    
     if (optimizationMode === 'speed' || this.config.rerank === false) {
       if (filesData.length > 0) {
         const [queryEmbedding] = await Promise.all([
@@ -394,7 +400,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
             similarity: sim,
           };
         });
-
+        
         let sortedDocs = similarity
           .filter(
             (sim) => sim.similarity > (this.config.rerankThreshold ?? 0.3),
@@ -414,6 +420,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         return docsWithContent.slice(0, 15);
       }
     } else if (optimizationMode === 'balanced') {
+
       const [docEmbeddings, queryEmbedding] = await Promise.all([
         embeddings.embedDocuments(
           docsWithContent.map((doc) => doc.pageContent),
@@ -443,7 +450,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
           similarity: sim,
         };
       });
-
+      
       const sortedDocs = similarity
         .filter((sim) => sim.similarity > (this.config.rerankThreshold ?? 0.3))
         .sort((a, b) => b.similarity - a.similarity)
