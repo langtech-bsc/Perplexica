@@ -4,7 +4,7 @@ general:
   instance_name: 'searxng'
 
 search:
-  autocomplete: 'google'
+  autocomplete: 'duckduckgo'
   formats:
     - html
     - json
@@ -14,4 +14,14 @@ server:
 
 engines:
   - name: wolframalpha
+    disabled: false
+  - name: google
+    disabled: true
+  - name: duckduckgo
+    disabled: false
+  - name: brave
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: mojeek
     disabled: false

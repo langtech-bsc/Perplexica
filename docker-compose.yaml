@@ -1,12 +1,25 @@
 services:
   vane:
-    image: itzcrazykns1337/vane:latest
+    image: vane-local:latest
     build:
       context: .
+    env_file: .env
+    environment:
+      - OPENSERP_URL=http://openserp:7000
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '3000:3000'
     volumes:
       - data:/home/vane/data
+    depends_on:
+      - openserp
+    restart: unless-stopped
+
+  openserp:
+    image: karust/openserp
+    command: serve -a 0.0.0.0 -p 7000
+    init: true
     restart: unless-stopped
 
 volumes:
