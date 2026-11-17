@@ -29,6 +29,7 @@ WORKDIR /home/vane
 COPY --from=builder /home/vane/public ./public
 COPY --from=builder /home/vane/.next/static ./public/_next/static
 COPY --from=builder /home/vane/.next/standalone ./
+COPY yarn.lock ./
 COPY --from=builder /home/vane/data ./data
 COPY drizzle ./drizzle
 
