@@ -42,9 +42,10 @@ class TransformersProvider extends BaseModelProvider<TransformersConfig> {
     const configProvider = getConfiguredModelProviderById(this.id)!;
 
     return {
+      /* Configured models first so they become the default selection */
       embedding: [
-        ...defaultModels.embedding,
         ...configProvider.embeddingModels,
+        ...defaultModels.embedding,
       ],
       chat: [],
     };

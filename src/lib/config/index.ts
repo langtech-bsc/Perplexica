@@ -218,6 +218,32 @@ class ConfigManager {
           (p) => p.hash === hash,
         );
 
+        /* e.g. OPENAI_CHAT_MODELS=model-a,model-b, TRANSFORMERS_EMBEDDING_MODELS=org/model */
+        const target = exists ?? newProvider;
+        const addEnvModels = (
+          list: ConfigModelProvider['chatModels'],
+          suffix: string,
+        ) => {
+          const keys = (
+            process.env[`${provider.key.toUpperCase()}_${suffix}`] || ''
+          )
+            .split(',')
+            .map((m: string) => m.trim())
+            .filter(Boolean);
+
+          keys
+            .filter((m: string) => !list.some((c) => c.key === m))
+            .forEach((m: string) => list.push({ name: m, key: m }));
+
+          return keys.length > 0;
+        };
+
+        /* Chat models from env leave nothing to set up in the UI */
+        if (addEnvModels(target.chatModels, 'CHAT_MODELS')) {
+          this.currentConfig.setupComplete = true;
+        }
+        addEnvModels(target.embeddingModels, 'EMBEDDING_MODELS');
+
         if (!exists) {
           newProviders.push(newProvider);
         }
