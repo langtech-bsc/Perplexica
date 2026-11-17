@@ -3,7 +3,10 @@ set -e
 
 echo "Starting SearXNG..."
 
-sudo -H -u searxng bash -c "cd /usr/local/searxng/searxng-src && export SEARXNG_SETTINGS_PATH='/etc/searxng/settings.yml' && export FLASK_APP=searx/webapp.py && /usr/local/searxng/searx-pyenv/bin/python -m flask run --host=0.0.0.0 --port=8080" &
+# Non-root runs (e.g. Hugging Face Spaces) start SearXNG as the current user
+if [ "$(id -u)" = "0" ]; then RUN_AS="sudo -H -u searxng"; else RUN_AS=""; fi
+
+$RUN_AS bash -c "cd /usr/local/searxng/searxng-src && export SEARXNG_SETTINGS_PATH='/etc/searxng/settings.yml' && export FLASK_APP=searx/webapp.py && /usr/local/searxng/searx-pyenv/bin/python -m flask run --host=0.0.0.0 --port=8080" &
 SEARXNG_PID=$!
 
 echo "Waiting for SearXNG to be ready..."

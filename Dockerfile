@@ -35,6 +35,7 @@ COPY drizzle ./drizzle
 
 RUN mkdir /home/vane/uploads
 
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN yarn add playwright
 RUN yarn playwright install --with-deps --only-shell chromium
 
@@ -70,6 +71,10 @@ RUN chmod +x ./entrypoint.sh
 RUN sed -i 's/\r$//' ./entrypoint.sh || true
 
 RUN echo "searxng ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Writable paths for non-root runs (e.g. Hugging Face Spaces run as UID 1000)
+RUN mkdir -p node_modules/@huggingface/transformers/.cache && \
+    chown -R 1000:1000 data uploads node_modules/@huggingface/transformers/.cache
 
 EXPOSE 3000 8080
 
